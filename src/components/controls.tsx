@@ -168,6 +168,64 @@ export function Select<T extends string>({
   );
 }
 
+export function Toggle({
+  value,
+  onChange,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={"toggle" + (value ? " on" : "")}
+      role="switch"
+      aria-checked={value}
+      onClick={() => onChange(!value)}
+    >
+      <span className="toggle-knob" />
+    </button>
+  );
+}
+
+export function TextInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      className="text-input"
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+export function TextArea({
+  value,
+  onChange,
+  rows = 3,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+}) {
+  return (
+    <textarea
+      className="text-area"
+      rows={rows}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
 export function Hint({ children }: { children: ReactNode }) {
   return <p className="hint">{children}</p>;
 }

@@ -7,8 +7,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import type { PageConfig } from "../types";
-import { PT_TO_MM, pageDimensions, resolveFont } from "../lib/paper";
+import type { FooterConfig, HeaderConfig, PageConfig } from "../types";
+import { makeUnits, pageDimensions, resolveFont } from "../lib/paper";
+import { PaperHeader } from "./PaperHeader";
+import { PaperFooter } from "./PaperFooter";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
@@ -20,18 +22,32 @@ const SAMPLE_PARAGRAPHS = [
   "Vùng lề được vẽ bằng khung kẻ đứt màu cam. Phần đệm nội dung (padding) nằm bên trong khung lề. Khi bạn đổi khổ giấy, hướng giấy hay các thông số chữ, trang xem trước sẽ tự cập nhật theo tỉ lệ thật.",
 ];
 
+type FitMode = "width" | "page";
+
 const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 const round2 = (z: number) => Math.round(z * 100) / 100;
 
-export function PaperPreview({ config }: { config: PageConfig }) {
+interface Props {
+  config: PageConfig;
+  header: HeaderConfig;
+  footer: FooterConfig;
+  title: string;
+}
+
+export function PaperPreview({ config, header, footer, title }: Props) {
   const { width, height } = pageDimensions(config);
+  const u = makeUnits(width);
   const stageRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const [fitMode, setFitMode] = useState<FitMode>("width");
 
   const zoomBy = useCallback((delta: number) => {
     setZoom((z) => round2(clampZoom(z + delta)));
   }, []);
-  const fit = useCallback(() => setZoom(1), []);
+  const fitTo = useCallback((mode: FitMode) => {
+    setFitMode(mode);
+    setZoom(1);
+  }, []);
 
   // Ctrl + wheel → zoom. Registered natively (non-passive) so we can
   // preventDefault and stop the browser's own page zoom / scroll.
@@ -47,38 +63,47 @@ export function PaperPreview({ config }: { config: PageConfig }) {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  // mm / pt → cqw (relative to the paper's rendered width).
-  const mm = (v: number) => `${(v / width) * 100}cqw`;
-  const pt = (v: number) => `${((v * PT_TO_MM) / width) * 100}cqw`;
-
   const paperStyle = {
     "--pw": width,
     "--ph": height,
   } as CSSProperties;
 
   const marginFrameStyle: CSSProperties = {
-    top: mm(config.margin.top),
-    right: mm(config.margin.right),
-    bottom: mm(config.margin.bottom),
-    left: mm(config.margin.left),
+    top: u.mm(config.margin.top),
+    right: u.mm(config.margin.right),
+    bottom: u.mm(config.margin.bottom),
+    left: u.mm(config.margin.left),
   };
 
   const contentStyle: CSSProperties = {
-    top: mm(config.margin.top + config.padding),
-    right: mm(config.margin.right + config.padding),
-    bottom: mm(config.margin.bottom + config.padding),
-    left: mm(config.margin.left + config.padding),
+    top: u.mm(config.margin.top + config.padding),
+    right: u.mm(config.margin.right + config.padding),
+    bottom: u.mm(config.margin.bottom + config.padding),
+    left: u.mm(config.margin.left + config.padding),
     fontFamily: resolveFont(config.font),
-    fontSize: pt(config.fontSize),
+    fontSize: u.pt(config.fontSize),
     lineHeight: config.leading,
   };
 
   return (
     <div className="preview">
       <div className="preview-bar">
-        <button type="button" className="fit-btn" onClick={fit}>
-          Fit trang
-        </button>
+        <div className="fit-group">
+          <button
+            type="button"
+            className={fitMode === "width" ? "on" : ""}
+            onClick={() => fitTo("width")}
+          >
+            Fit rộng
+          </button>
+          <button
+            type="button"
+            className={fitMode === "page" ? "on" : ""}
+            onClick={() => fitTo("page")}
+          >
+            Fit trang
+          </button>
+        </div>
         <div className="zoom-ctrl">
           <button
             type="button"
@@ -100,18 +125,28 @@ export function PaperPreview({ config }: { config: PageConfig }) {
         </div>
       </div>
 
-      <div className="preview-stage" ref={stageRef} style={{ "--zoom": zoom } as CSSProperties}>
+      <div
+        className={"preview-stage fit-" + fitMode}
+        ref={stageRef}
+        style={{ "--zoom": zoom } as CSSProperties}
+      >
         <div className="paper" style={paperStyle}>
           <div className="paper-margin" style={marginFrameStyle} />
           <div className="paper-content" style={contentStyle}>
-            <h1 className="sample-h1" style={{ fontSize: pt(config.fontSize * 1.6) }}>
-              {SAMPLE_PARAGRAPHS[0]}
-            </h1>
-            {SAMPLE_PARAGRAPHS.slice(1).map((p, i) => (
-              <p key={i} className="sample-p" style={{ marginBottom: pt(config.fontSize) }}>
-                {p}
-              </p>
-            ))}
+            {header.enabled && <PaperHeader header={header} title={title} u={u} />}
+            <div className="paper-body">
+              <h1 className="sample-h1" style={{ fontSize: u.pt(config.fontSize * 1.6) }}>
+                {SAMPLE_PARAGRAPHS[0]}
+              </h1>
+              {SAMPLE_PARAGRAPHS.slice(1).map((p, i) => (
+                <p key={i} className="sample-p" style={{ marginBottom: u.pt(config.fontSize) }}>
+                  {p}
+                </p>
+              ))}
+            </div>
+            {footer.enabled && (
+              <PaperFooter footer={footer} pageNo={1} pageCount={1} u={u} />
+            )}
           </div>
         </div>
       </div>

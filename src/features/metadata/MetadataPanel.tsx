@@ -3,7 +3,7 @@
 // other way around.
 
 import { useMemo, useState } from "react";
-import type { PageConfig } from "../../types";
+import type { FooterConfig, HeaderConfig, PageConfig } from "../../types";
 import { buildMetadata, metadataToJSON } from "../../lib/metadata";
 
 interface Row {
@@ -11,8 +11,18 @@ interface Row {
   value: string;
 }
 
-export function MetadataPanel({ config }: { config: PageConfig }) {
-  const meta = useMemo(() => buildMetadata(config), [config]);
+interface Props {
+  config: PageConfig;
+  header: HeaderConfig;
+  footer: FooterConfig;
+  name: string;
+}
+
+export function MetadataPanel({ config, header, footer, name }: Props) {
+  const meta = useMemo(
+    () => buildMetadata(config, header, footer, name),
+    [config, header, footer, name],
+  );
   const json = useMemo(() => metadataToJSON(meta), [meta]);
   const [copied, setCopied] = useState(false);
 
@@ -37,6 +47,10 @@ export function MetadataPanel({ config }: { config: PageConfig }) {
     { key: "font", value: meta.font },
     { key: "font_size", value: `${meta.font_size_pt} pt` },
     { key: "leading", value: `${meta.leading}× · ${meta.line_height_mm} mm` },
+    { key: "header", value: meta.header_enabled ? "bật" : "tắt" },
+    { key: "logo", value: meta.logo },
+    { key: "footer", value: meta.footer_enabled ? "bật" : "tắt" },
+    { key: "page_number", value: meta.page_number },
   ];
 
   return (

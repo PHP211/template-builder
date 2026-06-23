@@ -56,3 +56,21 @@ export function orientationLabel(o: Orientation): string {
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+/**
+ * Scaling helpers for the preview. Lengths are returned in `cqw` (1cqw = 1% of
+ * the paper's rendered width), so they stay physically proportional at any zoom.
+ */
+export interface PreviewUnits {
+  /** millimetres → cqw */
+  mm: (v: number) => string;
+  /** points → cqw */
+  pt: (v: number) => string;
+}
+
+export function makeUnits(pageWidthMM: number): PreviewUnits {
+  return {
+    mm: (v) => `${(v / pageWidthMM) * 100}cqw`,
+    pt: (v) => `${((v * PT_TO_MM) / pageWidthMM) * 100}cqw`,
+  };
+}

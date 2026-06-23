@@ -3,6 +3,7 @@
 
 export type PaperSize = "A1" | "A2" | "A3" | "A4";
 export type Orientation = "portrait" | "landscape";
+export type Align = "left" | "center" | "right";
 
 export interface Margins {
   top: number;
@@ -24,4 +25,34 @@ export interface PageConfig {
   fontSize: number;
   /** Line spacing as a multiplier of the font size (1 = single). */
   leading: number;
+}
+
+export interface HeaderConfig {
+  enabled: boolean;
+  /** Show a logo box on the left. */
+  logo: boolean;
+  /** Logo image as a data URL; empty = show a placeholder box. */
+  logoSrc: string;
+  /** Bold organisation line. */
+  line1: string;
+  /** Secondary organisation line. */
+  line2: string;
+  /** Append the report title under the org lines. */
+  showTitle: boolean;
+  /** Draw a rule under the header. */
+  rule: boolean;
+  align: Align;
+}
+
+export interface FooterConfig {
+  enabled: boolean;
+  /** Show the page number. */
+  pageNum: boolean;
+  pageNumPos: Align;
+  /** Centre note text. */
+  text: string;
+  /** Show the print date on the left. */
+  showDate: boolean;
+  /** Draw a rule above the footer. */
+  rule: boolean;
 }
